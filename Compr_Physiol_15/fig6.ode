@@ -1,0 +1,34 @@
+# The delay-differential equation model for prolactin oscillations.
+# Used to make Fig. 6 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+#
+# Variables (dimensionless): p = prolactin concentration
+#                            d = dopamine concentration
+#
+
+p(0)=0
+d(0)=20
+
+# units of t are hr
+
+# prolactin parameters
+par Tp=6, kd=1, q=0.5
+
+# dopamine parameters
+#par Td=10, kp=0.03, rv=2, tau=3
+par Td=0.3, rv=2, tau=3
+
+# Equations
+
+p' = Tp*(1/(kd+d^2))-q*p 
+d' = Td*delay(p,tau)^2-q*d
+
+aux tdays=t/24
+
+# set max delay and other xpp parameters
+@ delay=6, dt=0.2, total=378, maxstor=20000
+@ bounds=10000000, xp=tdays, yp=p
+@ nplot=2, xp1=tdays, yp1=d, xp2=tdays, yp2=p
+@ xlo=0, xhi=4, ylo=0, yhi=20
+
+done

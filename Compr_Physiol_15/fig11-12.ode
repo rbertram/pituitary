@@ -1,0 +1,47 @@
+# The s-model for electrical bursting.
+# Used to make Figs. 11  and 12 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+
+# Initial conditions
+v(0)=-43.0
+n(0)=0.03
+s(0)=0.29
+#
+# Model parameters
+params taus=10000,vs=-40
+params gs=20,gkatp=13,lambda=1.1
+
+# To make the fast subsystem bifurcation diagram set autos=0
+params autos=1,sknot=1
+
+# invisible parameters
+number vca=100, vk=-80, cm=4524
+number tnbar=9.09, vm=-22, vn=-9, sm=7.5, sn=10
+number ss=0.5
+number gl=25,vl=-40,gk=1300,gca=280
+
+# assorted functions
+minf = 1.0/(1.0+exp((vm-v)/sm))
+ninf = 1.0/(1.0+exp((vn-v)/sn))
+taun = tnbar/(1.0+exp((v-vn)/sn))
+sinf = 1/(1.0+exp((vs-v)/ss))
+
+# ionic currents
+ica = gca*minf*(v-vca)
+is = gs*s*(v-vk)
+ik = gk*n*(v-vk)
+il = gl*(v-vl)
+ikatp = gkatp*(v-vk)
+
+# differential equations
+v' = -(ica+is+il+ik+ikatp)/cm
+n' = lambda*(ninf-n)/taun
+s' = autos*((sinf-s)/taus) + (1-autos)*(sknot-s) 
+
+aux tsec=t/1000
+
+# XPP parameters
+@ meth=cvode, dtmax=1, dt=10, total=50000, maxstor=10000
+@ bounds=100000000, xp=tsec,  yp=v, toler=1.0e-6, atoler=1.0e-6
+@ xlo=0, xhi=50, ylo=-70, yhi=-10
+done

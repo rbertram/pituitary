@@ -1,0 +1,23 @@
+# A genetic toggle switch.
+# Used to make Figs. 3-5 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+
+par alpha1=10, alpha2=10
+par beta=2, gamma=2
+
+init x=2, y=3
+
+x' = alpha1/(1+y^beta) - x
+y' = alpha2/(1+x^gamma) - y
+
+# XPP commands
+@ maxstor=120000
+@ total=220, dt=0.01, bounds=1000000
+@ method=Runge-Kutta, toler=0.0000001, dtmin=0.000001, dtmax=1
+@ bell=off
+@ xp=x, yp=y
+@ xlo=0, xhi=10, ylo=0, yhi=10
+
+done
+
+

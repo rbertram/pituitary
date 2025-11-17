@@ -1,0 +1,23 @@
+# The a-nullcline for the relaxation model.
+# Used in Fig. 10B,D in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+#
+
+# model parameter
+par b=-2
+
+# initial condition
+init a=-1
+
+# differential equation
+a' = a - a^3 - b
+
+# xpp parameters
+@ maxstor=120000
+@ total=20, dt=0.01, bounds=1000000
+@ method=Runge-Kutta, toler=0.0000001, dtmin=0.000001, dtmax=1
+@ bell=0
+@ xp=t, yp=a
+@ xlo=0, xhi=20, ylo=-3, yhi=3
+
+done

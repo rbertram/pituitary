@@ -1,0 +1,52 @@
+# Pituitary lactotroph model.
+# Used to make Fig. 13 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier K current activation
+#    c -- calcium concentration
+
+# initial conditions
+v(0)=-22
+n(0)=0.14 
+c(0)=0.3
+
+# model parameters
+par vn=-5, kc=0.16, ff=0.01,
+par vca=50, vk=-75, gk=4, Cm=5, gf=0.5 
+par gcal=2, gsk=1.7
+par vm=-20, vf=-20
+par sn=10, sm=12, sf=5.6
+par taun=43,  ks=0.5, alpha=0.0015 
+ 
+# To make the fast subsystem bifurcation diagram set autoc=0
+params autoc=1,cknot=0.2
+
+# functions
+phik=1/(1+exp((vn-v)/sn))
+phif=1/(1+exp((vf-v)/sf))
+phical=1/(1+exp((vm-v)/sm))
+cinf=c^2/(c^2+ks^2)
+
+# ionic currents
+ica=gcal*phical*(v-vca)
+isk=gsk*cinf*(v-vk)
+ibk=gf*phif*(v-vk)
+ikdr=gk*n*(v-vk)
+ik = isk + ibk + ikdr 
+
+# differential equations
+v'= -(ica+ik)/Cm
+n'= (phik-n)/taun
+c'= -ff*(alpha*ica+kc*c)*autoc+(1-autoc)*(cknot-c)
+
+aux  tsec = t/1000
+
+# xpp parameters
+@ dt=0.1, total=6000, maxstor=200000
+@ bounds=1000000000, xp=tsec, yp=v
+@ xlo=0, xhi=3, ylo=-85, yhi=10, bell=off
+# AUTO parameters
+@ Ntst=70, Nmax=1000, Npr=1500, parmin=-1, parmax=200,Dsmax=0.2
+done

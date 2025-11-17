@@ -1,0 +1,24 @@
+# A relaxation oscillator.
+# Used to make Fig. 10 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+
+par p1=0.1, p2=0.5, eps=0.05
+
+# Use eps=1 for similar time scales and eps=0.05 for relaxation oscillation.
+
+# initial conditions
+init a=-1, b=0
+
+# differential equations
+a' = a - a^3 - b
+b' = eps*(a + p1*b + p2)
+
+# xpp parameters
+@ maxstor=120000
+@ total=200, dt=0.01, bounds=1000000
+@ method=Runge-Kutta, toler=0.0000001, dtmin=0.000001, dtmax=1
+@ bell=0
+@ nplot=2, xp1=t, yp1=a, xp2=t, yp2=b
+@ xlo=0, xhi=200, ylo=-3, yhi=3
+
+done

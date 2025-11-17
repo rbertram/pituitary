@@ -1,0 +1,57 @@
+# Hodgkin-Huxley equations with type 2 dynamics.
+# Used to make Fig. 7 in Mathematical Modeling in Neuroendocrinology, by
+# R. Bertram, Comprehensive Physiology, 5:911-927, 2015.
+ 
+# initial conditions
+
+init v=-63, n=0.35, m=0.07, h=0.64
+
+# parameters
+num vna=50,vk=-75,vl=-50,gna=120,gk=36,gl=0.3,c=1
+par ion=1,ioff=0,ton=100,toff=300
+par ion2=1.0,ioff2=0,ton2=400,toff2=700
+par ion3=1.5,ioff3=0,ton3=700,toff3=1000
+
+# kinetic functions
+am =  .1*(v+40)/(1-exp(-(v+40)/10))
+bm =  4*exp(-(v+65)/18)
+ah =  .07*exp(-(v+65)/20)
+bh =  1/(1+exp(-(v+30)/10))
+an =  .01*(v+55)/(1-exp(-(v+55)/10))
+bn =  .125*exp(-(v+65)/80)
+
+# infinity and time constant functions
+minf = am/(am+bm)
+hinf = ah/(ah+bh)
+ninf = an/(an+bn)
+tn   = 1/(an+bn)
+th   = 1/(ah+bh)
+tm   = 1/(am+bm)
+
+# pulses of applied current
+fon=if(t>ton)then(ion)else(0)
+foff=if(t>toff)then(ion)else(0)
+fon2=if(t>ton2)then(ion2)else(0)
+foff2=if(t>toff2)then(ion2)else(0)
+fon3=if(t>ton3)then(ion3)else(0)
+foff3=if(t>toff3)then(ion3)else(0)
+iap=ioff + fon - foff + fon2 - foff2 + fon3 - foff3
+
+aux iap=iap
+
+v'=(iap - gna*h*(v-vna)*m^3-gk*(v-vk)*n^4-gl*(v-vl))/c
+h'=(hinf-h)/th
+n'=(ninf-n)/tn
+m'=(minf-m)/tm
+
+# XPP commands
+@ maxstor=120000
+@ total=1100, dt=0.01, bounds=1000000
+@ method=Runge-Kutta, toler=0.0000001, dtmin=0.000001, dtmax=1
+@ xlo=0, xhi=1100, ylo=-80, yhi=40
+# AUTO commands
+@ Nmax=500, NPr=200, ParMin=-50, ParMax=300
+@ AutoXMin=-5, AutoXMax=190
+@ AutoYMin=-80, AutoYMax=35
+done
+
