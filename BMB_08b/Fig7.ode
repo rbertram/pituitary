@@ -1,0 +1,122 @@
+# Fig7.ode
+
+# Published in "A Mathematical Model for the Actions of Activin, Inhibin, and
+# Follistatin on Pituitary Gonadotrophs", by Bertram and Li, Bulletin of
+# Mathematical Biology, 70:2211-2228, 2008.
+# This file is for the in vitro model, used to make Figure 7.
+
+# Variables:
+#    FSHp = FSH protein level in the gonadotroph
+#    FSHb = FSH level in the blood
+#    FSp = FS protein level
+#    FSb = FS level in the blood
+#    Ab = Activin level in the blood
+#    LHb = LH level in the blood
+#    I = Inhibin level in the blood
+
+FSHp(0)=0.1
+FSHb(0)=0.1
+FSp(0)=0.1
+FSb(0)=0.1
+Ab(0)=0.1
+LHb(0)=0.1
+G(0)=0.05
+I(0)=0.05
+
+# Normalized GnRH pulse frequency.
+
+par Gon=0.29,mult=3.2
+par tauIb=20,tauIa=2
+par ton=66,tonI=60
+
+tdur=96-ton
+tdurI=74-tonI
+ton2=ton+96
+ton3=ton2+96
+tonI2=tonI+96
+tonI3=tonI2+96
+
+estrous = (heav(t-ton)-heav(t-ton-tdur)) + (heav(t-ton2)-heav(t-ton2-tdur)) + (heav(t-ton3)-heav(t-ton3-tdur))
+estrousI = (heav(t-tonI)-heav(t-tonI-tdurI)) + (heav(t-tonI2)-heav(t-tonI2-tdurI)) + (heav(t-tonI3)-heav(t-tonI3-tdurI))
+
+par Ion=5,Ioff=1
+mu=Gon*(1-estrous*mult)
+Iinf=Ion*(1-estrousI) + Ioff*estrousI
+tauI=tauIb*(1-estrousI)+tauIa*estrousI
+
+# First order removal parameter (common to all)
+par d=1
+
+# inhibin effect parameter (set ki=0 to remove influence of inhibin)
+par ki=3
+k1bar=5*(1+ki)
+k5bar=0.5*(1+ki)
+
+# FSHp parameters
+par v1=10
+
+# FSHb parameters
+par v2=10,k2=0.1,k3=5
+
+# FSp parameters
+par v3=4,k4=1.5
+
+# FSb parameters
+par v4=100,k6=1,k7=5,p=10
+
+# Ab parameters
+par v5=10,k8=0.1
+
+# LHb parameters
+par v6=15,k9=1
+
+term0=I^3/(ki^3+I^3)
+term1=Ab/(k1+Ab)
+# term1=0.42
+term2=(G/(k2+G))
+# term2=0.83
+term3=(FSHp/(k3+FSHp))
+# term3=0.45
+term4=(G/(k4+G))
+# term4=0.25
+term5=(Ab/(k5+Ab))
+# term5=0.87
+term6=(G/(k6+G))
+# term6=0.33
+term7=(FSp/(k7+FSp))
+# term7=0.15
+term8=(G/(k8+G))
+# term8=0.83
+term9=(G/(k9+G))
+
+# k1 and k5 modulation by inhibin
+k1=term0*k1bar
+k5=term0*k5bar
+
+FSHp' = v1*term1 - d*FSHp
+FSHb' = v2*term2*term3 - d*FSHb
+FSp' = v3*term4*term5 - d*FSp
+FSb' = v4*term6*term7 - p*Ab*FSb - d*FSb
+Ab' = v5*term8 - p*Ab*FSb - d*Ab
+LHb' = v6*term9 - d*LHb
+G' = mu*G^2
+I' = (Iinf-I)/tauI
+
+@ meth=cvode, toler=1.0e-9, atoler=1.0e-9, dt=0.5, total=288,
+@ maxstor=20000,bounds=10000000, xp=tday, yp=fshb
+@ xlo=0, xhi=12, ylo=0, yhi=5, bell=off
+@ BUT=QUIT:fq, BUT=AUTO:fa
+
+aux tday=t/24
+aux ratio=LHb/FSHb
+aux term0=term0
+aux term1=term1
+aux term2=term2
+aux term3=term3
+aux term4=term4
+aux term5=term5
+aux term6=term6
+aux term7=term7
+aux term8=term8
+
+done
