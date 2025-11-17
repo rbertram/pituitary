@@ -1,0 +1,60 @@
+# Fig8.ode
+#
+# This XPPAUT file contains the mathematical model used in Figure 7 of
+# Bertram, Egli, Toporikova, and Freeman, American Journal of Physiology,
+# in press, 2006. The terminating factor (H) directly inhibits lactotrophs. 
+
+# Variables (dimensionless): p = prolactin concentration
+#                            d = dopamine concentration
+#                            o = oxytocin concentration
+#                            vip = VIP neuron activity
+#                            N = interneuron activity
+#                            H = terminating factor
+
+p(0)=0
+d(0)=20
+o(0)=0
+H(0)=0
+N(0)=0
+
+# units of t are hr
+
+# prolactin parameters
+par vo=0.01, Tp=6, q=0.5, kd=1
+
+# dopamine parameters
+par Td=10, kp=0.03, rv=2, tau=3
+
+# OT-sensing neuron parameters
+par von=0.0002, rn=0.2
+
+# Externally applied OT pulse (set p_inj=1000 for OT injection)
+par tinj=48, p_inj=1000, tpdur=2
+I = p_inj*(heav(t-tinj)-heav(t-tinj-tpdur))
+
+# CS termination (PL, or other hormone)
+par rH=5, tH=312, tauH=40
+Hswitch = heav(t-tH)
+
+# Circadian VIP neuron activity
+par period=24, tf1=2, vipdur=3
+vip = heav(mod(t,period)-tf1)-heav(mod(t,period)-(tf1+vipdur))
+
+# Equations
+
+p' = Tp*(1/(kd+d^2))-q*p+vo*o-rH*p*H 
+d' = Td*(1-N)+Td*kp*delay(p,tau)^2-q*d-rv*vip*d
+o' = I-q*o 
+H' = Hswitch*((1-H)/tauH)
+N' = von*o-rn*N*(N-.5)*(N-1) 
+
+aux tdays=t/24
+aux Pulse=H
+aux Vip=vip
+
+# set max delay and other xpp parameters
+@ delay=6, dt=0.2, total=425, maxstor=20000
+@ bounds=10000000, xp=tdays, yp=p, bell=off
+@ xlo=0, xhi=16, ylo=0, yhi=10
+
+done
