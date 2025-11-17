@@ -1,0 +1,63 @@
+% NC_08.ode
+
+% This XPP program was used in the publication: "A-Type K+ Current Can 
+% Act as a Trigger for Bursting in the Absence of a Slow Variable",
+% Natalia Toporikova, Joel Tabak, Marc E. Freeman, and Richard Bertram,
+% Neural Computation, 20:436-451, 2008.
+
+% Variables: V = voltage (mV)
+%            n = activation of I_DR
+%            e = inactivation of I_A
+
+% Actions
+" {ga=0} spiking
+" {ga=3} 2-spike bursting
+" {ga=7} 3-spike bursting
+" {ga=13} 4-spike bursting
+" {ga=15} 5-spike bursting
+" {ga=23} hyperpolarized
+
+% Initial conditions:
+v(0)=-60  
+n(0)=0.001  
+e(0)=0 
+
+% Parameter values 
+par ga=0
+par vca=50,vk=-75  
+par gk=4.33,gca=2,gl=0.3  
+par vn=-5,va=-20,vm=-20,ve=-60
+par sn=10,sa=10,sm=12,se=5
+par taun=43,c=10,taue=20,auto=0,epar=0
+
+% e-clamping equation
+ed=e*(1-auto)+epar*auto
+
+% Activation and Inactivation functions
+phik=1/(1+exp((vn-v)/sn))
+phia=1/(1+exp((va-v)/sa))
+phie=1/(1+exp((v-ve)/se))
+phica=1/(1+exp((vm-v)/sm))
+
+% Ionic currents
+ica=(gca*phica*(vca-v))
+ik=(gk*n*(vk-v)+ga*phia*ed*(vk-v))
+il=(gl*(vk-v))
+
+% The ODEs
+v'= (ica+ik+il)/c
+n'= (phik-n)/taun
+e'= (phie-e)/taue
+
+aux ia=-ga*phia*ed*(vk-v)
+aux idr=-gk*n*(vk-v)
+aux tsec=t/1000
+
+aux ninf=phik
+aux einf=phie
+
+@ dt=0.5, total=3000, maxstor=200000
+@ bounds=10000000, xp=tsec, yp=v, bell=off
+@ xlo=0, xhi=3, ylo=-80, yhi=0
+
+done

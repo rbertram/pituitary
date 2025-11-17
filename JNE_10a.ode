@@ -1,0 +1,85 @@
+#  JNE_10a.ode
+#
+#  Computer code used in the article "A Tale of Two Rhythms: The
+#  Emerging Roles of Oxytocin in Rhythmic Prolactin Release" by
+#  R. Bertram, C.V. Helena, A.E. Gonzalez-Iglesias, J. Tabak, and M.E. Freeman,
+#  J. Neuroendocrinology, 22:778-784, 2010. 
+
+# Variables (dimensionless): p = prolactin concentration
+#                            d = dopamine concentration
+#                            o_inj = oxytocin concentration from injection
+#                            opvn = oxytocin concentration from PVN
+#                            op = oxytocin concentration in pituitary
+#                            vip = VIP neuron activity
+#                            M = memory process
+
+p(0)=0
+d(0)=20
+o_inj(0)=0
+opvn(0)=0
+M(0)=0
+
+# units of t are hr
+
+# prolactin parameters
+par vop=2,Tp=1, q=0.5, kd=1
+
+# dopamine parameters
+par Td=10, kpp=0.3, rv=2, tau=3
+
+# memory process parameters
+par von1=0.006, rm=0.4
+
+# Injection parameters
+par t_inj=48,t_cs=48,tpdur=2
+
+# OT injection
+par ot_inj=1000
+I_ot = ot_inj*(heav(t-t_inj)-heav(t-t_inj-tpdur))
+
+# PRL injection
+par prl_inj=25
+I_prl = prl_inj*(heav(t-t_inj)-heav(t-t_inj-tpdur))
+
+# Cervical stimulation
+par von2=1
+cs = (heav(t-t_cs)-heav(t-t_cs-tpdur))
+
+# Circadian VIP neuron activity
+par period=24, tf1=2, vipdur=3
+vip = heav(mod(t,period)-tf1)-heav(mod(t,period)-(tf1+vipdur))
+
+# OT from OT neurons of the PVN to the pituitary
+par ro=3, ko=1
+
+# Total OT in pituitary
+op = Opvn + o_inj
+
+# Peripheral OT antagonist (OTa) application
+par tOTa=240, tOTadur=72
+OTA = (heav(t-tOTa)-heav(t-tOTa-tOTadur))
+vo = vop*(1-OTa)
+
+# Central PRL antagonist (PRLa) application
+par tPRLa=240, tPRLadur=72
+PRLa = (heav(t-tPRLa)-heav(t-tPRLa-tPRLadur))
+kp = kpp*(1-PRLa)
+
+# Equations
+p' = I_prl+(Tp+vo*op)*(1/(kd+d^2))-q*p
+d' = Td*(1-M)+kp*delay(p,tau)^2-q*d-rv*vip*d
+o_inj' = I_ot-q*o_inj 
+opvn' = (ro*M)/(ko+p^2)-q*opvn 
+M' = von1*p*(1-PRLa) + von2*cs - rm*M*(M-.5)*(M-1) 
+
+aux tdays=t/24
+aux Vip=vip
+aux Op=op
+aux OTA=OTA
+
+# set max delay and other xpp parameters
+@ delay=6, dt=0.1, total=176, maxstor=20000
+@ bounds=10000000, xp=tdays, yp=p, bell=off
+@ xlo=0, xhi=7, ylo=0, yhi=10
+
+done

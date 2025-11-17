@@ -1,0 +1,64 @@
+# JCNS_10.ode
+
+# This XPPAUT file contains the program for the activity of a
+# pituitary lactotroph published in: T. Vo, R. Bertram, J. Tabak, 
+# and M. Wechselberger, "Mixed Mode Oscillations as a Mechanisms for
+# Pseudo-Plateau Bursting", J. Comput. Neurosci., 28:443-458, 2010.
+
+# Variables: 
+#    v = membrane potential
+#    n = delayed rectifier K current activation
+#    e = inactivation of A current
+
+# Actions
+" {c=6, gk=4.4, ga=18} Figure 1
+" {c=2, gk=4.4, ga=2} Figure 2
+" {c=2, gk=4.4, ga=2} Figure 3
+" {c=2, gk=4.4, ga=15} Figure 4
+" {c=2, gk=4.4, ga=2} Figure 5
+" {c=2, gk=4.4, ga=4} Figure 6
+" {c=0.05, gk=4, ga=4} Figure 9
+" {c=2, gk=6.00895, ga=10} Figure 11 
+" {c=2, gk=4, ga=4} Figure 12 
+
+# Initial conditions:
+v(0)=-60  
+n(0)=0.001  
+e(0)=0 
+
+# Parameter values 
+par gk=4.4,c=2,ga=2
+num vca=50,vk=-75  
+num gca=2,gl=0.3
+num vn=-5,va=-20,vm=-20,ve=-60
+num sn=10,sa=10,sm=12,se=5
+par taun=40,taue=20
+
+# Activation and Inactivation functions
+phik=1/(1+exp((vn-v)/sn))
+phia=1/(1+exp((va-v)/sa))
+phie=1/(1+exp((v-ve)/se))
+phica=1/(1+exp((vm-v)/sm))
+
+# Ionic currents
+ica=(gca*phica*(vca-v))
+ik=(gk*n*(vk-v)+ga*phia*e*(vk-v))
+il=(gl*(vk-v))
+
+# The ODEs
+v'= (ica+ik+il)/c
+n'= (phik-n)/taun
+e'= (phie-e)/taue
+
+aux ia=-ga*phia*e*(vk-v)
+aux idr=-gk*n*(vk-v)
+aux tsec=t/1000
+
+aux ninf=phik
+aux einf=phie
+
+@ dt=0.1, total=2000, maxstor=200000
+@ bounds=10000000, xp=tsec, yp=v, bell=off
+@ xlo=0, xhi=2, ylo=-80, yhi=0
+
+done

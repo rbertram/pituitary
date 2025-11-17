@@ -1,0 +1,89 @@
+# JP_15.ode
+
+# This XPPAUT file contains the program for the activity of a 
+# pituitary corticotroph as described in the paper "Large conductance 
+# Ca2+-activated K+ (BK) channels promote secretagogue-induced transition 
+# from spiking to bursting in murine anterior pituitary corticotrophs", 
+# Peter J. Duncan, Sevgi Sengul, Joel Tabak, Peter Ruth, Richard Bertram and 
+# Michael J. Shipston, Journal of Physiology, 593:1197-1211, 2015.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier activation variable
+#    c -- free cytosolic calcium concentration
+#    bf -- activation variable for BK-far channels
+#    bn -- activation variable for BK-near channels
+
+#
+#initial conditions
+v(0)=-60
+n(0)=0.1
+c(0)=0.1
+bf(0)=0.1
+bn(0)=0.1
+
+#parameters
+#Set mu=1 for CRH (bursting) and mu=0 for no CRH (spiking)
+par noise=5,mu=1
+par taubkf=4,taubkns=20,taubknb=4,gbknear=2,gbkfar=1
+par gcals=1.8,gcalb=2.2,gir=1,gk=8.2,gnss=0.11,gnsb=0.2
+par Cm=6,kcabkns=18,kcabknb=6
+par vk=-75,sm=10,taun=40
+par kcabkf=0.6,sbn=3,sbf=3
+num kc=0.12, ff=0.01
+num vca=60,vir=-60
+num vm=-20,vn=-5,sn=10
+num ks=0.4, alpha=0.0015 vns=-10
+num sir=-1
+num vbk0=0.1,kshift=18,A=0.15
+
+gcal= gcals*alphacal
+alphacal=mu*(gcalb/gcals)+(1-mu)
+taubkn=taubkns*(mu*(taubknb/taubkns)+(1-mu))
+gns= gnss*alphans
+alphans=mu*(gnsb/gnss)+(1-mu)
+kcabkn= kcabkns*alphabkn
+alphabkn=mu*(kcabknb/kcabkns)+(1-mu)
+ 
+# use auto=1 to make bifurcation diagram with Ca as parameter (cpar)
+par auto=0,cpar=0.8
+
+vbkfar=vbk0-kshift*log(c/kcabkf)
+vbknear=vbk0-kshift*log(CaDOM/kcabkn)
+CaDOM= -A*(ica)	
+
+phik=1/(1+exp((vn-v)/sn))
+phical=1/(1+exp((vm-v)/sm))
+cinf = cd^2/(cd^2+ks^2)
+kirinf = 1/(1+exp((vir-v)/sir))
+bkfarinf=1/(1+exp((vbkfar-v)/sbf))
+bknearinf= 1/(1+exp((vbknear-v)/sbn))
+aux vbknear=vbknear
+
+ica=gcal*phical*(v-vca)
+ikdr=gk*n*(v-vk)
+ins = gns*(v-vns)
+ikir = gir*kirinf*(v-vk)
+ibkfar  = gbkfar*bf*(v-vk)
+ibknear = gbknear*bn*(v-vk)
+
+# noise 
+wiener w
+inoise = noise*w
+
+cd=(1-auto)*c+auto*cpar
+
+ik = ikdr + ibkfar + ibknear
+v'= -(ica+ik+ins+ikir+inoise)/Cm
+n'= (phik-n)/taun
+c'= -ff*(alpha*ica+kc*c)
+bf'= (bkfarinf-bf)/taubkf
+bn'= (bknearinf-bn)/taubkn
+
+aux tsec=t/1000
+
+@ dt=0.01, total=6000, maxstor=200000, method=euler
+@ bounds=1000000000, xp=tsec, yp=v
+@ xlo=0, xhi=6, ylo=-75, yhi=20, bell=1
+@ Ntst=70, Nmax=1000, Npr=1500, parmin=-1, parmax=200,Dsmax=0.2
+done

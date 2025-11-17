@@ -1,0 +1,54 @@
+% JNS_11b.ode
+
+% This XPPAUT file implements a stochastic model for the activity of a pituitary
+% lactotroph as described in the paper "Fast-Activating Voltage- and 
+% Calcium-Dependent Potassium (BK) Conductance Promotes Bursting in Pituitary 
+% Cells", J. Tabak, M. Tomaiuolo, A.E. Gonzalez-Iglesias, L.S. Milescu,
+% and R. Bertram, The Journal of Neuroscience, 31:16855-16863, 2011.
+% It was used to make Figures 1 and 2.
+%
+
+
+init v=-60 n=0.1 f=0.01 c=0.1
+
+par vca=60 vk=-75 vl=-50
+par Cm=10
+par gk=3  gcal=2  gsk=2  gbk=0.  gl=0.2
+par vn=-5   vm=-20  vf=-20
+par sn=10   sm=12   sf=2
+par taun=30 taubk=5
+par ff=0.01 alpha=0.0015 kc=0.12 ks=0.4
+par auto=0, cpar=0
+par noise=4.0
+
+wiener w
+
+% use auto=0 for simulation
+% use auto=1 to make bifurcation diagram with Ca as parameter (cpar)
+cd=(1-auto)*c+auto*cpar
+
+phik=1/(1+exp((vn-v)/sn))
+phif=1/(1+exp((vf-v)/sf))
+phical=1/(1+exp((vm-v)/sm))
+cinf=cd^2/(cd^2+ks^2)
+
+ica=gcal*phical*(v-vca)
+isk=gsk*cinf*(v-vk)
+ibk=gbk*f*(v-vk)
+ikdr=gk*n*(v-vk)
+ileak=gl*(v-vl)
+
+ik = isk + ibk + ikdr
+inoise = noise*w
+
+v'= -(ica+ik+inoise+ileak)/Cm
+n'= (phik-n)/taun
+f'= (phif-f)/taubk
+c'= -ff*(alpha*ica+kc*c)
+
+
+@ dt=0.05, total=5000, maxstor=20000000
+@ bounds=10000000, xp=t, yp=v
+@ xlo=0, xhi=5000, ylo=-75, yhi=0
+@ method=Euler, bell=off
+done

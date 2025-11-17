@@ -1,0 +1,61 @@
+# Endo_04.ode
+#
+# This XPPAUT file contains the mathematical model described in "Rhythmic
+# Secretion of Prolactin in Rats: Action of Oxytocin Coordinated by
+# Vasoactive Intestinal Polypeptide of Suprachiasmatic Nucleus Origin", by
+# Egli, Bertram, Sellix, and Freeman, Endocrinology, 145:3386-3394, 2004.
+#
+
+# Variables: p = prolactin concentration
+#            d = dopamine concentration
+#            o = oxytocin concentration
+
+# Time-Dependent Parameters
+#            x = X-factor
+#            vip = VIP concentration
+
+p(0)=20
+d(0)=20000
+o(0)=25
+
+# units of p, d, o are ng/ml
+# units of t are hr
+
+# prolactin parameters
+par rp=300000, qp=0.5
+
+# dopamine parameters 
+par qd=0.2, vdbar=10000
+par dinf=20000
+
+# OT parameters
+par ro=1100, qo=1, vobar=500
+
+# x factor parameters
+par xbar1=50, xbar2=50, xhalf=50
+
+# SCN output
+num period=24, tf1=2, tf2=16
+pulse1 = heav(mod(t,period)-tf1)-heav(mod(t,period)-(tf1+2))
+pulse2 = heav(mod(t,period)-tf2)-heav(mod(t,period)-(tf2+2))
+x = 1 + xbar1*pulse1 + xbar2*pulse2
+vip = pulse1
+vd = vdbar*vip
+vo = vobar*vip
+
+# Equations
+
+p' = rp*(1/(300+d))*(o/(9+o))^2-qp*p
+d' = qd*(dinf-d)-vd
+o' = ro*(x/(xhalf+x))-qo*o-vo
+
+aux X=x
+aux Vip=vip
+
+# set xpp parameters
+@ dt=0.2, total=24, maxstor=20000
+@ bounds=10000000, xp=t, yp=p
+@ xlo=0, xhi=24, ylo=0, yhi=100
+
+done
+

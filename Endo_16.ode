@@ -1,0 +1,117 @@
+# Endo_16.ode
+
+# This XPPAUT file contains the program for the activity of a 
+# pituitary corticotroph and the effects of CORT as described in 
+# the paper "Glucocorticoids Inhibit CRH/AVP-Evoked Bursting Activity of 
+# Male Murine Anterior Pituitary Corticotrophs", 
+# Peter J. Duncan, Joel Tabak, Peter Ruth, Richard Bertram and
+# Michael J. Shipston, Endocrinology, 157:3108-3121, 2016.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier activation variable
+#    c -- free cytosolic calcium concentration
+#    bf -- activation variable for BK-far channels
+#    bn -- activation variable for BK-near channels
+
+# For figures in new paper:
+#
+
+# Note that gnscort will take different values in CRH/AVP vs. CRH.
+# With CRH/AVP use gnscort=0.15, and with CRH use gnscort=0.11
+# Logical parameters are used to adjust everything else.
+
+#
+#initial conditions
+v(0)=-60
+n(0)=0.1
+c(0)=0.1
+bf(0)=0.1
+bn(0)=0.1
+
+# Parameter values for different conditions:
+# Note that gnscort will take different values in CRH/AVP vs. CRH.
+# With CRH/AVP use gnscort=0.15, and with CRH use gnscort=0.11
+# Logical parameters are used to adjust everything else.
+
+#Set CRH=1 for CRH (bursting) and CRH=0 for no CRH (spiking)
+#Set AVP=1 if AVP present, AVP=0 if not
+#Set KO=1 if BKKO, otherwise KO=0
+#Set CORT=1 if CORT is present, otherwise CORT=0
+
+par gnscort=0.15
+par CRH=0,AVP=0,KO=0,CORT=0
+
+# Other parameter values
+par sigmaN=5
+par taubkf=2,taubkns=20,taubknb=2,gbknear=2,gbkfar=1
+par gcals=1.8,gcalb=2.4,gir=1,gkdr=8.2,gnss=0.12,gnsavp=0.2
+par Cm=6
+par kcabkns=2,kcabknb=6
+par vk=-75,sm=10,taun=40
+par kcabkf=0.6,kbk=3
+par A=0.12  
+num kc=0.12, ff=0.01
+num vca=60,vir=-60
+num vm=-20,vn=-5,sn=10
+num alpha=0.0015 vns=-10
+num sr=-1
+num vbk0=0.1,kshift=18
+
+# Functions
+gcal= gcals*(CRH*(gcalb/gcals)+(1-CRH))
+
+# CRH changes taubkn, but CORT removes this change
+taubkn1=taubkns*(CRH*(taubknb/taubkns)+(1-CRH))
+taubkn=taubkn1*(1-CORT) + taubkns*CORT
+
+gns1= gnss*(AVP*(gnsavp/gnss)+(1-AVP))
+gns=gns1*(1-CORT) + gnscort*CORT
+
+# CRH changes kcabkn, but CORT removes this change
+kcabkn1=kcabkns*(CRH*(kcabknb/kcabkns)+(1-CRH))
+kcabkn=kcabkn1*(1-CORT) + kcabkns*CORT
+ 
+# use auto=1 to make bifurcation diagram with Ca as parameter (cpar)
+par auto=0,cpar=0.8
+
+vbkfar=vbk0-kshift*log(c/kcabkf)
+vbknear=vbk0-kshift*log(CaDOM/kcabkn)
+CaDOM= -A*(ica)	
+aux CaDOM=CaDOM
+
+phik=1/(1+exp((vn-v)/sn))
+phical=1/(1+exp((vm-v)/sm))
+kirinf = 1/(1+exp((vir-v)/sr))
+bkfarinf=1/(1+exp((vbkfar-v)/kbk))
+bknearinf= 1/(1+exp((vbknear-v)/kbk))
+
+# Ionic currents
+ica=gcal*phical*(v-vca)
+ikdr=gkdr*n*(v-vk)
+ins = gns*(v-vns) 
+ikir = gir*kirinf*(v-vk)
+ibkfar  = (1-KO)*gbkfar*bf*(v-vk) 
+ibknear = (1-KO)*gbknear*bn*(v-vk)
+ik = ikdr + ibkfar + ibknear
+
+# noise 
+wiener w
+inoise = sigmaN*w
+
+# domain calcium concentration
+cd=(1-auto)*c+auto*cpar
+
+v'= -(ica+ik+ins+ikir+inoise)/Cm
+n'= (phik-n)/taun
+c'= -ff*(alpha*ica+kc*c)
+bf'= (bkfarinf-bf)/taubkf
+bn'= (bknearinf-bn)/taubkn
+
+aux tsec=t/1000
+
+@ dt=0.01, total=6000, maxstor=20000000, method=euler
+@ bounds=1000000000, xp=tsec, yp=v
+@ xlo=0, xhi=6, ylo=-75, yhi=20, bell=0
+@ Ntst=70, Nmax=1000, Npr=1500, parmin=-1, parmax=200,Dsmax=0.2
+done

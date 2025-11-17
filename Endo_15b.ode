@@ -1,0 +1,63 @@
+# Endo_15b.ode
+
+# KNDy ablation model.
+# Used in Fig. 6 of "KNDy Neurons Modulate the Magnitude of the
+# Steroid-Induced Luteinizing Hormone Surges in Ovariectomized Rats",
+# by C. V. Helena, N. Toporikova, B. Kalil, A. M. Stathopoulos,
+# V. V. Pogrebna, R. O. Carolino, J. A. Anselmo-Franci, and R. Bertram,
+# Endocrinology, 156:4200-4213, 2015.
+
+# Important: The curves in the figure of the paper have been normalized
+# to the peaks of the control. Also, KNDy neuron activity (K) is treated
+# as a parameter here, since it does not vary in time.
+
+# Variables:
+#    A: activity of AVPV population of kisspeptin neurons
+#    L: LH level
+
+# initial conditions
+A(0)=1.5
+L(0)=0.2
+
+# model parameters
+Tae=1.2
+Ta=0.5
+q=0.3
+ql=0.5
+Ake=0.7
+Bke=3
+Aak=0.75
+Bak=0.3
+Ale=1.5
+Ble=0.3
+Ala=0.4
+Alk=10
+
+# parameters that may be adjusted
+# set frac to be the fraction of remaining KNDy neurons
+par K=0.7
+par E=1.5
+par frac=1
+
+Ktot = frac*K
+
+# functions
+down(a1,a2,v)=a1/(a2+v^2)
+
+# Circadian input pulse C applied to AVPV neurons
+par period=24, ton=14, dur=5
+C = 3*(heav(mod(t,period)-ton)-heav(mod(t,period)-(ton+dur)))
+
+# differential equations
+A' = Ta + C*E*(Tae+down(Aak,Bak,Ktot)) - q*A
+L' = Ala*A^2 + Alk*Ktot^2 + down(Ale,Ble,E) -q*L
+
+# auxiliary variables
+aux C=C
+
+# xpp parameters
+@ dt=0.1, total=48, maxstor=200000
+@ bounds=1000000000, xp=tsec, yp=L
+@ xlo=0, xhi=48, ylo=0, yhi=1000, bell=off
+
+done

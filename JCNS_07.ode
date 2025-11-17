@@ -1,0 +1,64 @@
+# JCNS_07.ode
+
+# This XPPAUT file contains the program for the activity of a 
+# pituitary lactotroph published in: J. Tabak, N. Toporikova,
+# M. E. Freeman, and R. Bertram, "Low Dose of Dopamine may Stimulate Prolactin
+# Secretion by Increasing Fast Potassium Currents", J. Comput. Neurosci.,
+# 22:211-222, 2007.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier K current activation
+#    h -- A current inactivation 
+#    c -- calcium concentration
+
+init v=-60, n=0.1, h=0.1, c=0.1
+
+num vca=50,vk=-75
+num Cm=10  
+par gk=4,gcal=2,gsk=1.7,ga=0,gf=0
+num vn=-5,va=-20,vm=-20,vh=-60,vf=-20
+num sn=10,sa=10,sm=12,sh=5,sf=5.6
+par taun=30,tauh=20,lambda=0.7,kc=0.16,ks=0.5 
+num ff=0.01,alpha=0.0015
+par auto=0,cpar=0
+
+% use auto=0 for simulation
+% use auto=1 to make bifurcation diagram with Ca as parameter (cpar)
+cd=(1-auto)*c+auto*cpar
+
+phik=1/(1+exp((vn-v)/sn))
+phia=1/(1+exp((va-v)/sa))
+phih=1/(1+exp((v-vh)/sh))
+phif=1/(1+exp((vf-v)/sf))
+phical=1/(1+exp((vm-v)/sm))
+
+cinf=cd^2/(cd^2+ks^2)
+ica=gcal*phical*(v-vca)
+
+isk=gsk*cinf*(v-vk)
+ibk=gf*phif*(v-vk)
+ikdr=gk*n*(v-vk)
+ia=ga*phia*h*(v-vk)
+
+ik = isk + ibk + ikdr + ia
+
+v'= -(ica+ik)/Cm
+n'= lambda*(phik-n)/taun
+h'= (phih-h)/tauh
+c'= -ff*(alpha*ica+kc*c)
+
+aux aical=ica
+aux aia=ia
+aux aidr=ikdr
+aux aisk=isk
+aux aibk=ibk
+aux iktot=ik
+aux ca=cd
+aux sinf=cinf
+aux itot=ik+ica
+
+@ dt=2, total=6000, maxstor=200000
+@ bounds=10000000, xp=t, yp=v
+@ xlo=0, xhi=6000, ylo=-75, yhi=0, bell=off
+done

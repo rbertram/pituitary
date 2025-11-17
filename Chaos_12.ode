@@ -1,0 +1,67 @@
+# Lactotroph.ode
+
+# This XPPAUT file contains the program for the activity of a 
+# pituitary lactotroph as described in the paper "The Relationship Between Two
+# Fast/Slow Analysis Techniques for Bursting Oscillations", W. Teka, J. Tabak,
+# R. Bertram, Chaos, 22:043117, 2012.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier K current activation
+#    c -- calcium concentration
+
+v(0)=-60
+n(0)=0.1 
+c(0)=0.1
+par auto=0, cpar=0.8
+par vn=-5, kc=0.16, ff=0.01,
+par vca=50, vk=-75, gk=4, Cm=5, gf=0.4 
+
+par gcal=2, gsk=1.7
+par vm=-20, vf=-20
+par sn=10, sm=12, sf=5.6
+par taun=43,  ks=0.5, alpha=0.0015 
+ 
+# use auto=0 for simulation
+# use auto=1 to make bifurcation diagram with Ca as parameter (cpar)
+
+%cd=(1-auto)*c+auto*cpar
+
+phik=1/(1+exp((vn-v)/sn))
+phif=1/(1+exp((vf-v)/sf))
+phical=1/(1+exp((vm-v)/sm))
+cinf=c^2/(c^2+ks^2)
+
+ica=gcal*phical*(v-vca)
+isk=gsk*cinf*(v-vk)
+ibk=gf*phif*(v-vk)
+ikdr=gk*n*(v-vk)
+
+ik = isk + ibk + ikdr 
+
+v'= -(ica+ik)/Cm
+n'= (phik-n)/taun
+c'= -ff*(alpha*ica+kc*c)*(1-auto)+auto*(cpar-c)
+
+%aux aical=ica
+%aux aidr=ikdr
+%aux aisk=isk
+%aux aibk=ibk
+%aux iktot=ik
+%aux ca=cd
+aux sinf=cinf
+aux gf=gf
+aux gk=gk
+aux  tsec = t/1000
+%aux itot=ik+ica
+
+%@ dt=10, total=200000, maxstor=200000
+%@ bounds=10000000, xp=tsec, yp=v, bell=off
+%@ xlo=0, xhi=60000, ylo=-80, yhi=25
+
+
+@ dt=0.1, total=60000, maxstor=200000
+@ bounds=1000000000, xp=t, yp=v
+@ xlo=0, xhi=3000, ylo=-85, yhi=10, bell=off
+@ Ntst=70, Nmax=1000, Npr=1500, parmin=-1, parmax=200,Dsmax=0.2
+done
