@@ -1,0 +1,1 @@
+This repository contains computer codes related to pituitary cells and pituitary-hypothalmus interactions. The text at the beginning of each file provides a citation to the journal article in which the model is described.
