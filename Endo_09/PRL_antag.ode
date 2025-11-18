@@ -1,0 +1,58 @@
+# PRL_antag.ode
+#
+# Computer code used in the article "The Rhythmic Secretion of 
+# Mating-Induced Prolactin Secretion is Controlled by Prolactin Acting 
+# Centrally" by C. V. Helena, D. T. McKee, R. Bertram, A. M. Walker, and
+# M. E. Freeman, Endocrinology, 150:3245-3251, 2009. 
+
+# Parameters set to simulate application of a PRL antagonist. Used in Fig. 5.
+
+# Variables (dimensionless): p = prolactin concentration
+#                            d = dopamine concentration
+#
+
+p(0)=0
+d(0)=20
+
+# Actions
+
+" {vipdur=0,tPRLA=24,tPRLAdur=192} with antag
+" {vipdur=0,tPRLA=0,tPRLAdur=0} No antag
+
+# units of t are hr
+
+# prolactin parameters
+par Tp=6, kd=1, q=0.5
+
+# dopamine parameters
+par Td=10, kp=0.03, rv=2, tau=3, kp2=0.2
+
+# Circadian VIP neuron activity (not used in this article) 
+par period=24, tf1=2, vipdur=0
+vip = heav(mod(t,period)-tf1)-heav(mod(t,period)-(tf1+vipdur))
+
+# Cervical stimulation
+par tCS=24
+CSswitch = heav(t-tCS)
+
+# PRL antagonist (PRLA) application
+par tPRLA=24, tPRLAdur=192
+PRLA = (heav(t-tPRLA)-heav(t-tPRLA-tPRLAdur))
+k = kp*(1-PRLA)*delay(p,tau)^2 + kp2*PRLA
+
+# Equations
+
+p' = Tp*(1/(kd+d^2))-q*p 
+d' = Td*(1+k)-q*d-rv*vip*d-Td*CSswitch
+
+aux tdays=t/24
+aux Vip=vip
+aux prla=PRLA
+
+# set max delay and other xpp parameters
+@ delay=6, dt=0.1, total=72, maxstor=20000
+@ bounds=10000000, xp=tdays, yp=p
+@ xlo=0, xhi=3, ylo=0, yhi=8
+@ BUT=QUIT:fq
+
+done
