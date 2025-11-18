@@ -1,0 +1,65 @@
+#  closed_cell.ode
+
+# This XPPAUT file contains the program for calcium oscillations in a cell
+# in which total calcium is conserved (closed cell model). It was used to
+# make Fig. 14A in: S. S. Stoijilkovic, J. Tabak, R. Bertram,
+# "Ion Channels and Signaling in the Pituitary Gland",
+# Endocrine Reviews, 31:845-915, 2010.
+
+# Variables:
+#     C -- cytosolic calcium concentration
+#     h -- inactivation variable for the IP3 receptor
+
+#
+# ER fluxes
+Jer_out = (L + P*( (IP3*C*h)/((IP3+Ki)*(C+Ka)))^3 )*(Cer - C)
+Jer_in = (Ve*C^2)/(Ke^2+C^2)
+
+# The equations (Cer is calcium concentration in the ER)
+dC/dt = fi/Vi*(Jer_out-Jer_in)
+dh/dt = A*(Kd-(C + Kd)*h)
+Cer = (Ct - C)/sigma
+
+#
+# The parameters
+# IP3 pulse
+# set pulse=0 for no pulse, pulse=1 for a pulse of IP3
+par pulse=1, IP3pulse=0.8
+par tpulse=50, tduration=100
+
+# IP3 = uM
+par IP3bas=0
+# Ct = uM
+par Ct=2
+par fi=0.01
+# Vi = pL
+par Vi=4
+# L,P = pL/s
+par L=0.37
+par P=26640
+# C, Cer, I, Ki, Ka, Ke, Kd = uM 
+par Ki=1.0
+par Ka=0.4
+# Ve = aMol/s [sic]
+par Ve=400
+par Ke=0.2
+par A=0.5
+par Kd=0.4
+par sigma=0.185
+
+# Apply the pulse protocol
+ts = t-tpulse
+ts2 = t-(tpulse+tduration)
+Ip3 = IP3bas+pulse*(heav(ts)-heav(ts2))*IP3pulse
+
+#
+# The initial conditions
+C(0)=0.02
+h(0)=0.95
+#
+aux Cer=Cer
+#
+@ meth=qualrk, total=200, dt=0.1, maxstor=10000
+@ xp=t, yp=c, xlo=0,xhi=200,ylo=0,yhi=1.5
+@ bounds=100000000, toler=1.0e-9, atoler=1.0e-9
+done

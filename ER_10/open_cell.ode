@@ -1,0 +1,84 @@
+#  open_cell.ode
+
+# This XPPAUT file contains the program for calcium oscillations in a cell
+# in which total calcium is determined by flux across the plasma membrane 
+# (open cell model). It was used to make Fig. 14B in: S. S. Stoijilkovic,
+# J. Tabak, R. Bertram, "Ion Channels and Signaling in the Pituitary Gland",
+# Endocrine Reviews, 31:845-915, 2010.
+
+# Variables:
+#     C -- cytosolic calcium concentration
+#     Ct -- total calcium concentration in the cell
+#     h -- inactivation variable for the IP3 receptor
+
+#
+# ER fluxes
+Jer_out = (L + P*( (IP3*C*h)/((IP3+Ki)*(C+Ka)))^3 )*(Cer - C)
+Jer_in = (Ve*C^2)/(Ke^2+C^2)
+
+# Plasma membrane efflux
+Jmem_out = (Vp*C^2)/(Kp^2 + C^2) 
+
+# The equations
+dC/dt = fi/Vi*( Jer_out - Jer_in + eps*(Jin-Jmem_out) )
+dh/dt = A*(Kd-(C + Kd)*h)
+dCt/dt = fi/Vi*eps*( Jin - Jmem_out )
+
+Cer = (Ct - C)/sigma
+
+#
+# The parameters
+# IP3 pulse
+# set pulse=0 for no pulse, pulse=1 for a pulse of IP3
+par pulse=1, IP3pulse=0.7
+par tpulse=50, tduration=400
+
+# Jin removal
+par remove=1, tremove=150
+
+# Jin = aMol/s
+par Jmem_in=1200
+# IP3 = uM
+par IP3bas=0
+# Vi = pL
+par Vi=4
+par fi=0.01
+# L,P = pL/s
+par L=0.37
+par P=26640
+# C, Cer, I, Ki, Ka, Ke, Kd = uM 
+par Ki=1.0
+par Ka=0.4
+# Ve, Vp = aMol/s [sic]
+par Ve=400
+par Vp=2000
+par Kp=0.3
+par Ke=0.2
+par A=0.5
+par Kd=0.4
+par sigma=0.185
+par eps=0.01
+
+# Apply the pulse protocol
+ts = t-tpulse
+ts2 = t-(tpulse+tduration)
+Ip3 = IP3bas+pulse*(heav(ts)-heav(ts2))*IP3pulse
+
+ts3 = t-tremove
+Jin = Jmem_in*(1-remove*heav(ts3))
+
+#
+# The initial conditions
+C(0)=0.02
+h(0)=0.95
+Ct(0)=4.0
+
+#
+aux Cer=Cer
+aux Ip3=Ip3
+aux jin=Jin
+#
+@ meth=qualrk, total=400, dt=0.1, maxstor=10000
+@ xp=t, yp=c, xlo=0,xhi=400,ylo=0,yhi=4
+@ bounds=100000000, toler=1.0e-9, atoler=1.0e-9
+done

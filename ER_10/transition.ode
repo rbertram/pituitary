@@ -1,0 +1,66 @@
+# transition.ode
+
+# This XPPAUT file contains the program for the transition from spiking to 
+# bursting in a pituitary cell. It was used to make Fig. 8
+# in: S. S. Stoijilkovic, J. Tabak, R. Bertram, "Ion Channels and Signaling
+# in the Pituitary Gland", Endocrine Reviews, 31:845-915, 2010.
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier K current activation
+#    h -- A current inactivation 
+#    c -- calcium concentration
+
+init v=-67, n=0.1, h=0.6, c=0.2
+
+# Actions
+" {iap=-2,gbk=0} add Ihyp
+" {iap=0,gbk=0.5} add Ibk
+
+par iap=0
+num vca=50,vk=-75
+num Cm=10  
+par gk=4,gcal=2,gsk=1.7,ga=0,gbk=0
+num vn=-5,va=-20,vm=-20,vh=-60,vf=-20
+num sn=10,sa=10,sm=12,sh=5,sf=5.6
+par taun=30,tauh=20,lambda=0.7,kc=0.16,ks=0.5 
+num ff=0.01,alpha=0.0015
+par auto=0,cpar=0
+
+phik=1/(1+exp((vn-v)/sn))
+phia=1/(1+exp((va-v)/sa))
+phih=1/(1+exp((v-vh)/sh))
+phif=1/(1+exp((vf-v)/sf))
+phical=1/(1+exp((vm-v)/sm))
+
+cinf=c^2/(c^2+ks^2)
+ica=gcal*phical*(v-vca)
+
+isk=gsk*cinf*(v-vk)
+ibk=gbk*phif*(v-vk)
+ikdr=gk*n*(v-vk)
+ia=ga*phia*h*(v-vk)
+
+ik = isk + ibk + ikdr + ia
+
+v'= -(ica+ik-iap)/Cm
+n'= lambda*(phik-n)/taun
+h'= (phih-h)/tauh
+c'= -ff*(alpha*ica+kc*c)
+
+#aux aical=ica
+#aux aia=ia
+#aux aidr=ikdr
+#aux aisk=isk
+#aux aibk=ibk
+#aux iktot=ik
+#aux ca=c
+#aux sinf=cinf
+#aux itot=ik+ica
+aux  tsec=t/1000
+
+
+@ dt=2, total=5000, maxstor=200000
+@ bounds=10000000, xp=tsec, yp=v
+@ xlo=0, xhi=5, ylo=-75, yhi0
+done

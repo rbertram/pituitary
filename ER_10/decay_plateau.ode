@@ -1,0 +1,66 @@
+# decay_plateau.ode
+ 
+# This XPPAUT file contains the program for the pulse-decay-plateau
+# that often occurs upon Gq activation. It was used to make Fig. 13
+# in: S. S. Stoijilkovic, J. Tabak, R. Bertram, "Ion Channels and Signaling
+# in the Pituitary Gland", Endocrine Reviews, 31:845-915, 2010.
+
+
+# Variables:
+#
+#  c -- cytosolic calcium
+#  cer -- ER calcium
+
+c(0)=0.0877
+cer(0)=264
+
+# set ip3pulse=0 for no pulse, ip3pulse=1 for a pulse of IP3 (P_IP3)
+par ip3pulse=1, Dpip3=0.001
+
+# Pulse protocol parameters:
+par tpulse=5000, tduration=60000
+
+#Ica
+par gca=1000, vhold=-60
+num vca=25, vm=-20, sm=12
+
+# Ca fluxes 
+par pleak=0.0001, kpmca=0.15, pip3init=0
+num fcyt=0.01, fer=0.01
+# vcyt_er = v_cyt/v_er; only ratio is needed
+par vcyt_er=20
+par kserca=0.3
+par gsoc=20
+par soc_act=100
+par ss=10
+
+# Miscellaneous
+number alpha=4.5e-06
+
+# Functions
+minf = 1/(1+exp((vm-v)/sm))
+sinf = 1/(1+exp((cer-soc_act)/ss))
+ica = gca*minf*(v-vca)
+isoc = gsoc*sinf*(v-vca)
+Jin =-alpha*(ica+isoc)
+Jpmca = kpmca*c
+Jserca = kserca*c
+Jrelease = (pleak+pip3)*(cer-c) 
+
+# Apply the pulse protocol
+ts = t-tpulse
+ts2 = t-(tpulse+tduration)
+pip3 = pip3init+ip3pulse*(heav(ts)-heav(ts2))*Dpip3
+v = vhold
+
+# Equations
+c' = fcyt*(Jin-Jpmca-Jserca+Jrelease)
+cer' = fer*vcyt_er*(Jserca-Jrelease)
+
+# itot in pA
+aux tsec=t/1000
+
+@ meth=rk4, toler=1.0e-10, atoler=1.0e-10, dt=10.0, total=100000, maxstor=200000
+@ bounds=10000000, xp=tsec, yp=c
+@ xlo=0, xhi=100, ylo=0.0, yhi=0.5
+done

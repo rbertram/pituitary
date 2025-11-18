@@ -1,0 +1,100 @@
+# burster.ode
+
+# This XPPAUT file contains the program for voltage and calcium 
+# bursting oscillations, as occur in GnRH-stimulated pituitary gonadotrophs. 
+# It was used to make Fig. 15 in: S. S. Stoijilkovic,
+# J. Tabak, R. Bertram, "Ion Channels and Signaling in the Pituitary Gland",
+# Endocrine Reviews, 31:845-915, 2010.
+
+# Variables:
+#     C -- cytosolic calcium concentration
+#     Ct -- total calcium concentration in the cell
+#     h -- inactivation variable for the IP3 receptor
+#     n -- delayed rectifier activation variable
+#     V -- membrane potential
+
+#
+# The initial conditions
+V(0)=-36
+n(0)=0.2
+C(0)=0.16
+h(0)=0.8
+Ct(0)=1.6
+
+# IP3 pulse
+# set pulse=0 for no pulse, pulse=1 for a pulse of IP3
+par pulse=0, IP3pulse=0.7
+par tpulse=50, tduration=400
+# IP3 = uM
+par IP3bas=0.01
+
+# plasma membrane parameters
+# units: V = mV; Kca = uM; Cm = uF/cm^2; g = uS/cm^2; phi = 1/s 
+params Vk=-85,Vca=120,Kca=0.5,Cm=1
+params gk=20,gca=20,gkca=8,phi=12
+params V1=-3,V2=30,V3=-20,V4=30
+
+# plasma membrane functions
+minf=.5*(1+tanh((V-V1)/V2))
+ninf=.5*(1+tanh((V-V3)/V4))
+taun= 1/(phi*cosh((V-V3)/(2*V4)))
+Ica=gca*minf*(V-Vca)
+Ik=gk*n*(V-Vk)
+Ikca=gkca*(V-Vk)*C^4/(C^4+Kca^4)
+
+# plasma membrane equations
+V'= (-Ik - Ica - Ikca)/Cm
+n'= (ninf-n)/taun
+
+#
+# ER fluxes
+Jer_out = (L + P*( (IP3*C*h)/((IP3+Ki)*(C+Ka)))^3 )*(Cer - C)
+Jer_in = (Ve*C^2)/(Ke^2+C^2)
+
+# Calcium fluxes through plasma membrane 
+Jmem_out = (Vp*C^2)/(Kp^2 + C^2) 
+Jmem_in = -alpha*Ica
+
+# The equations
+
+dC/dt = fi/Vi*( Jer_out - Jer_in + eps*(Jmem_in-Jmem_out) )
+dh/dt = A*(Kd-(C + Kd)*h)
+dCt/dt = fi/Vi*eps*( Jmem_in - Jmem_out )
+
+Cer = (Ct - C)/sigma
+
+# Vi (pL)
+num Vi=4
+num fi=0.01
+# L,P  (pL/s)
+num L=1.48
+num P=2960
+# C, Cer, I, Ki, Ka, Ke, Kd  (uM) 
+num Ki=0.0
+num Ka=0.4
+# Ve, Vp  
+num Ve=480
+num Vp=400
+num Kp=0.3
+num Ke=0.2
+num A=2.0
+num Kd=0.4
+num sigma=0.185
+num eps=0.01
+# alpha 
+num alpha=0.2
+
+# Apply the pulse protocol
+ts = t-tpulse
+ts2 = t-(tpulse+tduration)
+Ip3 = IP3bas+pulse*(heav(ts)-heav(ts2))*IP3pulse
+
+#
+aux Cer=Cer
+aux Ip3=Ip3
+aux Jin=Jmem_in
+#
+@ meth=qualrk, total=30, dt=0.1, maxstor=10000
+@ xp=t, yp=v, xlo=0,xhi=30,ylo=-90,yhi=30
+@ bounds=100000000, toler=1.0e-9, atoler=1.0e-9
+done
