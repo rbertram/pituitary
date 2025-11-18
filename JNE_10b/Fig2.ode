@@ -1,0 +1,102 @@
+# Fig2.ode
+
+#    This code was used to generate Fig.2 in the article
+# "Investigating Heterogeneity of Intracellular Calcium Dynamics in Anterior
+# Pituitary Lactotrophs Using a Combined Modelling / Experimental
+# Approach" by M. Tomaiuolo, R. Bertram, A. Gonzalez-Iglesias,
+# and J. Tabak, Journal of Neuroendocrinology 22:1279-1289, 2010  
+
+#    To reproduce Fig. 2
+# run the file in XPP and the calcium trace will be plotted
+# when the simulation is complete
+# click on the "Graphic stuff" and then
+# click on "add curve"
+# select Ceq as the variable to be plotted on the Y axis
+# click OK
+ 
+# This file contains the calcium subsystem only. It has been modified
+# to simulate application of IP3.
+
+# Variables:
+#
+#  c -- cytosolic calcium
+#  cer -- ER calcium
+
+c(0)=0.0877
+cer(0)=132
+
+# conductance in pS
+# currents in fA
+# Ca concentrations in uM
+# time in ms
+
+# Parameters
+
+# Run control parameters:
+
+par ip3pulse=10, Dpip3=0.0004
+par kclpulse=0, vdep=40
+
+# Pulse protocol parameters:
+par tpulse=5000, tduration=40000
+
+#Ica
+par gca=1000, vhold=-60
+num vm=-20, sm=12
+par vca=25
+
+# Ca fluxes (in uM ms^(_1))
+par pleak=0.0002, kpmca=0.15, pip3init=0
+num fcyt=0.01, fer=0.01
+# vcyt_er = v_cyt/v_er; only ratio is needed
+par vcyt_er=30
+par kserca=0.3
+# Miscellaneous
+number alpha=4.5e-06
+
+# Functions
+minf = 1/(1+exp((vm-v)/sm))
+ica = gca*minf*(v-vca)
+Jin =-alpha*ica
+Jpmca = kpmca*c
+Jserca = kserca*c
+Jrelease = (pleak+pip3)*(cer-c) 
+
+# Apply the pulse protocol
+ts = t-tpulse
+ts2 = t-(tpulse+tduration)
+pip3 = pip3init+ip3pulse*(heav(ts)-heav(ts2))*Dpip3
+v = vhold+kclpulse*(heav(ts)-heav(ts2))*vdep
+
+# Equilibrium c  
+Ceq = (Jin+(pleak+pip3)*cer)/(kpmca+kserca+pleak+pip3)
+omega = (kserca+pleak+pip3)/(kserca+kpmca+pleak+pip3)
+
+# Solution to ER quation
+par cer_init=132
+lambda2=-fer*Vcyt_er*(1-omega)*(pleak+pip3)
+lambda3=fer*Vcyt_er*omega*Jin
+lambda1=lambda3/lambda2 + Cer_init
+Cer_sol=lambda1*exp(lambda2*ts)-lambda3/lambda2
+
+# Equations
+c' = fcyt*(Jin-Jpmca-Jserca+Jrelease)
+cer' = fer*vcyt_er*(Jserca-Jrelease)
+
+aux tsec=t/1000
+aux Ceq=Ceq
+aux Cer_sol=Cer_sol
+aux res_cer=cer/100
+aux pip3=pip3
+aux v=v
+aux peak=(Jin+(pleak+pip3)*cer_init)/(kpmca+kserca+pleak+pip3)
+aux decay=-lambda2
+aux omega=omega
+aux slope=-lambda2/((Jin+(pleak+pip3)*cer_init)/(kpmca+kserca+pleak+pip3))
+
+@ meth=rk4, toler=1.0e-10, atoler=1.0e-10, dt=10.0, total=100000, maxstor=200000
+@ bounds=10000000, xp=tsec, yp=c
+@ xlo=0, xhi=40, ylo=0.0, yhi=1.5
+
+
+done
