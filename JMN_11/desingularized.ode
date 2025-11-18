@@ -1,0 +1,67 @@
+# desingularized.ode
+
+# This XPPAUT file contains the program for the desingularized system
+# described in the paper "The Dynamics Underlying Pseudo-Plateau Bursting
+# in a Pituitary Cell Model", W. Teka, J. Tabak, T. Vo, M. Wechselberger, R. Bertram,
+# the Journal of Mathematical Neuroscience, 2011, 1:12,
+# (DOI:10.1186/2190-8567-1-12). It was used to make figures 2, 3, 5, 6, 7, 8, 10, and 11.
+
+
+# Variables:
+#    v -- membrane potential
+#    n -- delayed rectifier K current activation
+
+#    c -- calcium concentration
+
+init v=-60, c=0.1
+ % init n=0.1 
+par vn=-5,  lambda=0.7,  kc=0.16, ff=0.01
+par gk=4,gf=0.4
+par vca=50,vk=-75
+par gcal=2,gsk=1.7
+par vm=-20,vf=-20
+par sn=10,sm=12,sf=5.6
+par taun=30,ks=0.5 
+par alpha=0.0015
+par auto=0,cpar=0
+
+% use auto=0 for simulation
+% use auto=1 to make bifurcation diagram with Ca as parameter 
+
+phik=1/(1+exp((vn-v)/sn))
+phif=1/(1+exp((vf-v)/sf))
+phica=1/(1+exp((vm-v)/sm))
+
+cinf=c^2/(c^2+ks^2)
+ ica=gcal*phica*(v-vca)
+
+% isk=gsk*cinf*(v-vk)
+% ibk=gf*phif*(v-vk)
+% ikdr=gk*n*(v-vk)
+
+% derivative w.r.t V
+diffphica = 1/12*(exp((vm-v)/sm)*phica^2)
+diffphif = 5/28*(exp((vf-v)/sf)*phif^2)
+diffcinf=8*c/(4*c^2 +1)^2
+%  n on the critical manifold
+n=-1/gk*(gcal*phica*(v-vca)/(v-vk)+gsk*cinf + gf*phif)
+
+% partial derivatives of f
+fv=-(gcal*(phica + diffphica*(v-vca)) +gk*n + gsk*cinf + gf*(phif + diffphif*(v-vk)))
+fc= 3.4*(v+75)*(-c/(c^2 +0.25) +c^3/(c^2 +0.25)^2)
+fn= -gk*(v-vk)
+% The ODEs
+ v'= -ff*(alpha*ica+kc*c)*fc + lambda*(phik-n)/taun*fn
+c'= ff*(alpha*ica+kc*c)*fv
+
+# aux ia=-ga*phia*e*(vk-v)
+# aux ninf=phik
+aux n_manifold=n
+
+
+@ dt=0.1, total=60000, maxstor=200000
+@ bounds=1000000000, xp=t, yp=v
+@ xlo=0, xhi=600000, ylo=-85, yhi=10
+@ Ntst=70, Nmax=1000, Npr=1500, parmin=-1, parmax=200,Dsmax=0.2
+done
+
